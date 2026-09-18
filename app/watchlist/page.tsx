@@ -1,0 +1,88 @@
+import Link from 'next/link';
+import { Activity, ArrowUpRight, BarChart3, CandlestickChart, CircleDollarSign, Search } from 'lucide-react';
+import { assets } from '@/lib/market-data';
+
+export default function WatchlistPage() {
+  const categories = [
+    { title: 'Crypto', icon: Activity },
+    { title: 'Forex', icon: CircleDollarSign },
+    { title: 'Stocks', icon: BarChart3 },
+    { title: 'Futures', icon: CandlestickChart },
+  ];
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <header className="mb-6 flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-[0.3em] text-blue-400">Alpha Libra</div>
+            <h1 className="text-3xl font-bold">Watchlist</h1>
+          </div>
+          <nav className="flex gap-2 text-sm">
+            <Link href="/" className="rounded-xl px-3 py-2 text-slate-300 hover:bg-slate-800/60">Dashboard</Link>
+            <Link href="/watchlist" className="rounded-xl bg-blue-500/10 px-3 py-2 text-blue-300 ring-1 ring-blue-500/30">Watchlist</Link>
+            <Link href="/signals" className="rounded-xl px-3 py-2 text-slate-300 hover:bg-slate-800/60">Signals</Link>
+          </nav>
+        </header>
+
+        <div className="mb-5 flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3">
+          <Search size={16} className="text-slate-400" />
+          <input
+            placeholder="Search symbol or name"
+            className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+          />
+        </div>
+
+        <div className="space-y-6">
+          {categories.map(({ title, icon: Icon }) => {
+            const group = assets.filter((asset) => asset.category === title);
+
+            return (
+              <section key={title} className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+                <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-400">
+                  <Icon size={18} />
+                  {title}
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-slate-800">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-950 text-slate-300">
+                      <tr>
+                        <th className="px-4 py-3">Symbol</th>
+                        <th className="px-4 py-3">Name</th>
+                        <th className="px-4 py-3">Price</th>
+                        <th className="px-4 py-3">Bias</th>
+                        <th className="px-4 py-3">Setup</th>
+                        <th className="px-4 py-3">Signal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.map((asset) => (
+                        <tr key={asset.symbol} className="border-t border-slate-800">
+                          <td className="px-4 py-3 font-medium text-white">{asset.symbol}</td>
+                          <td className="px-4 py-3 text-slate-300">{asset.name}</td>
+                          <td className="px-4 py-3">
+                            <div className="font-medium">{asset.price}</div>
+                            <div className={asset.direction === 'up' ? 'text-emerald-400' : 'text-rose-400'}>{asset.change}</div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-300">{asset.bias}</td>
+                          <td className="px-4 py-3 text-slate-300">{asset.setup}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${asset.trend === 'LONG' ? 'bg-emerald-500/15 text-emerald-300' : asset.trend === 'SHORT' ? 'bg-rose-500/15 text-rose-300' : asset.trend === 'WAIT' ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-500/15 text-slate-300'}`}>
+                              {asset.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowUpRight size={12} className="rotate-180" />}
+                              {asset.trend}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+  );
+}

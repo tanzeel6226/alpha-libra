@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { assets } from '@/lib/market-data';
 import { buildMarketSnapshot } from '@/lib/market-api';
 
+function formatAssetPrice(assetSymbol: string, value: string) {
+  const numeric = Number(value.replace(/[$,]/g, ''));
+
+  if (['BTCUSD', 'ETHUSD', 'SOLUSD'].includes(assetSymbol)) {
+    return `$${numeric.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  if (assetSymbol === 'EURUSD') {
+    return numeric.toFixed(4);
+  }
+
+  if (assetSymbol === 'XAUUSD') {
+    return `$${numeric.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  return value;
+}
+
 export async function GET() {
   const snapshot = await buildMarketSnapshot();
 
@@ -12,17 +30,15 @@ export async function GET() {
       return asset;
     }
 
+    const raw = live.change.replace('%', '');
+    const signed = Number(raw);
+    const formattedChange = `${signed >= 0 ? '+' : ''}${raw}%`;
+
     return {
       ...asset,
-      price: live.symbol.includes('BTC') || live.symbol.includes('ETH') || live.symbol.includes('SOL')
-        ? `$${Number(live.price.replace(/,/g, '')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : live.symbol === 'NQ'
-          ? Number(live.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : live.symbol === 'ES'
-            ? Number(live.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            : live.price,
-      change: `${live.change.startsWith('-') ? '' : '+'}${live.change.startsWith('-') ? live.change : live.change}`,
-      direction: live.direction,
+      price: formatAssetPrice(asset.symbol, live.price),
+      change: formattedChange,
+      direction: signed >= 0 ? 'up' : 'down',
     };
   });
 

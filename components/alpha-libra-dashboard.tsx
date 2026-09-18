@@ -1,29 +1,10 @@
+'use client';
+
 import { MoonStar, SunMedium, TrendingUp, Activity, BarChart3, ShieldCheck, ArrowUpRight, ArrowDownRight, Zap, Bell, Search, TimerReset, CandlestickChart, CircleDollarSign } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { Asset } from '@/lib/market-data';
 
-type Timeframe = '1H' | '4H' | '1D';
-type Signal = 'LONG' | 'SHORT' | 'WAIT' | 'NO TRADE';
-
-type Asset = {
-  symbol: string;
-  name: string;
-  price: string;
-  change: string;
-  direction: 'up' | 'down';
-  trend: Signal;
-  setup: string;
-  entry: string;
-  sl: string;
-  tp1: string;
-  tp2: string;
-  tp3: string;
-  tp4: string;
-  bias: string;
-  timeframe: Timeframe;
-  category: 'Crypto' | 'Forex' | 'Stocks' | 'Futures';
-};
-
-const assets: Asset[] = [
+const defaultAssets: Asset[] = [
   {
     symbol: 'BTCUSD',
     name: 'Bitcoin',
@@ -188,11 +169,14 @@ const assets: Asset[] = [
   },
 ];
 
+type Timeframe = '1H' | '4H' | '1D';
+type Signal = 'LONG' | 'SHORT' | 'WAIT' | 'NO TRADE';
+
 const groups = [
-  { label: 'Crypto', items: assets.filter((a) => a.category === 'Crypto'), icon: Activity },
-  { label: 'Forex', items: assets.filter((a) => a.category === 'Forex'), icon: CircleDollarSign },
-  { label: 'Stocks', items: assets.filter((a) => a.category === 'Stocks'), icon: BarChart3 },
-  { label: 'Futures', items: assets.filter((a) => a.category === 'Futures'), icon: CandlestickChart },
+  { label: 'Crypto', items: defaultAssets.filter((a) => a.category === 'Crypto'), icon: Activity },
+  { label: 'Forex', items: defaultAssets.filter((a) => a.category === 'Forex'), icon: CircleDollarSign },
+  { label: 'Stocks', items: defaultAssets.filter((a) => a.category === 'Stocks'), icon: BarChart3 },
+  { label: 'Futures', items: defaultAssets.filter((a) => a.category === 'Futures'), icon: CandlestickChart },
 ];
 
 const signalColors: Record<Signal, string> = {
@@ -206,26 +190,42 @@ export default function AlphaLibraDashboard() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeSymbol, setActiveSymbol] = useState('BTCUSD');
   const [chartOpen, setChartOpen] = useState(true);
+  const [assets, setAssets] = useState<Asset[]>(defaultAssets);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch('/api/market')
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && Array.isArray(data.assets)) {
+          setAssets(data.assets);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const activeAsset = useMemo(
-    () => assets.find((asset) => asset.symbol === activeSymbol) ?? assets[0],
-    [activeSymbol],
+    () => assets.find((asset) => asset.symbol === activeSymbol) ?? assets[0] ?? defaultAssets[0],
+    [activeSymbol, assets],
   );
 
-  const dashboardTheme =
-    theme === 'dark'
-      ? 'bg-slate-950 text-slate-100'
-      : 'bg-slate-100 text-slate-900';
-
-  const panelTheme =
-    theme === 'dark'
-      ? 'bg-slate-900/80 border-slate-800 text-slate-100'
-      : 'bg-white/90 border-slate-200 text-slate-900';
-
+  const dashboardTheme = theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900';
+  const panelTheme = theme === 'dark' ? 'bg-slate-900/80 border-slate-800 text-slate-100' : 'bg-white/90 border-slate-200 text-slate-900';
   const mutedText = theme === 'dark' ? 'text-slate-400' : 'text-slate-600';
   const softBg = theme === 'dark' ? 'bg-slate-800/80' : 'bg-slate-100';
-
   const chartPoints = '10,80 52,60 95,75 140,38 182,42 220,22 260,48 300,32 340,40 380,28';
+
+  const freshGroups = [
+    { label: 'Crypto', items: assets.filter((a) => a.category === 'Crypto'), icon: Activity },
+    { label: 'Forex', items: assets.filter((a) => a.category === 'Forex'), icon: CircleDollarSign },
+    { label: 'Stocks', items: assets.filter((a) => a.category === 'Stocks'), icon: BarChart3 },
+    { label: 'Futures', items: assets.filter((a) => a.category === 'Futures'), icon: CandlestickChart },
+  ];
 
   return (
     <main className={`min-h-screen ${dashboardTheme} transition-colors duration-300`}>
@@ -285,11 +285,11 @@ export default function AlphaLibraDashboard() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Watchlist</h2>
               <span className={`rounded-full px-2 py-1 text-xs ${theme === 'dark' ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
-                85 assets
+                {assets.length} assets
               </span>
             </div>
             <div className="space-y-4">
-              {groups.map(({ label, items, icon: Icon }) => (
+              {freshGroups.map(({ label, items, icon: Icon }) => (
                 <div key={label}>
                   <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-400">
                     <Icon size={14} />

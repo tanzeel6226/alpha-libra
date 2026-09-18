@@ -186,18 +186,15 @@ export const assets: Asset[] = [
   },
 ];
 
+export const getSignalSummary = () => ({
+  LONG: assets.filter((asset) => asset.trend === 'LONG').length,
+  SHORT: assets.filter((asset) => asset.trend === 'SHORT').length,
+  WAIT: assets.filter((asset) => asset.trend === 'WAIT').length,
+  'NO TRADE': assets.filter((asset) => asset.trend === 'NO TRADE').length,
+});
+
 export const getAssetsByCategory = (category: AssetCategory) =>
   assets.filter((asset) => asset.category === category);
-
-export const getSignalSummary = () => {
-  const counts = { LONG: 0, SHORT: 0, WAIT: 0, 'NO TRADE': 0 };
-
-  assets.forEach((asset) => {
-    counts[asset.trend] += 1;
-  });
-
-  return counts;
-};
 
 export const getStrongestSetup = () =>
   [...assets].sort((a, b) => (a.direction === 'up' ? -1 : 1)).slice(0, 5);
